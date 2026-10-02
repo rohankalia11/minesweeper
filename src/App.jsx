@@ -12,7 +12,7 @@ function reducer(state, action) {
 
 const pad = (n) => String(Math.max(0, Math.min(999, n))).padStart(3, '0')
 
-function Cell({ cell, exploded, dispatch, i }) {
+function Cell({ cell, exploded, dispatch, i, flagMode }) {
   const timer = useRef(null)
   const longPressed = useRef(false)
 
@@ -39,7 +39,7 @@ function Cell({ cell, exploded, dispatch, i }) {
       className={cls}
       onClick={() => {
         if (longPressed.current) { longPressed.current = false; return }
-        dispatch({ type: 'open', i })
+        dispatch({ type: flagMode && !cell.open ? 'flag' : 'open', i })
       }}
       onContextMenu={(e) => { e.preventDefault(); dispatch({ type: 'flag', i }) }}
       onTouchStart={startPress}
@@ -56,6 +56,7 @@ function Cell({ cell, exploded, dispatch, i }) {
 export default function App() {
   const [state, dispatch] = useReducer(reducer, 'Beginner', newGame)
   const [secs, setSecs] = useState(0)
+  const [flagMode, setFlagMode] = useState(false)
   const { cells, w, status, level, m } = state
 
   // Timer runs only while a game is in progress.
@@ -79,7 +80,16 @@ export default function App() {
         <span className="stat" title="Mines left">{pad(m - flags)}</span>
         <button className="face" onClick={() => dispatch({ type: 'reset' })} aria-label="Restart">{face}</button>
         <span className="stat" title="Time">{pad(secs)}</span>
-        <select
+        <button
+              className={'flagbtn' + (flagMode ? ' on' : '')}
+            onClick={() => setFlagMode((f) => !f)}
+            aria-pressed={flagMode}
+            aria-label="Flag mode"
+            title="Flag mode: tap to place or remove flags"
+      >
+      🚩
+      </button>
+      <select
           value={level}
           onChange={(e) => dispatch({ type: 'reset', level: e.target.value })}
           aria-label="Difficulty"
@@ -91,7 +101,7 @@ export default function App() {
       <div className="scroll">
         <div className="board" style={{ gridTemplateColumns: `repeat(${w}, var(--s))` }}>
           {cells.map((cell, i) => (
-            <Cell key={i} i={i} cell={cell} exploded={state.exploded === i} dispatch={dispatch} />
+            <Cell key={i} i={i} cell={cell} exploded={state.exploded === i} dispatch={dispatch} flagMode={flagMode}/>
           ))}
         </div>
       </div>
